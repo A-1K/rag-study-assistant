@@ -1,24 +1,29 @@
 /* ============================================================
    Design tokens + base styles
-   Light mode only, minimal, one accent (indigo).
+   Light and dark themes, one accent (indigo).
+   Theme is selected via data-theme="light|dark" on <html>.
    ============================================================ */
 
-:root {
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
   /* surfaces */
-  --bg: #f7f7f8; /* app background (warm near-white) */
-  --surface: #ffffff; /* cards, inputs */
-  --surface-2: #fbfbfc; /* subtle inset areas */
+  --bg: #f7f7f8;
+  --surface: #ffffff;
+  --surface-2: #fbfbfc;
+  --topbar-bg: rgba(247, 247, 248, 0.8);
 
   /* text */
-  --text: #0f172a; /* primary  (slate-900) */
-  --text-muted: #64748b; /* secondary (slate-500) */
-  --text-subtle: #94a3b8; /* tertiary  (slate-400) */
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --text-subtle: #94a3b8;
 
   /* lines */
   --border: #e6e7eb;
   --border-strong: #d6d8de;
 
-  /* accent (indigo) — used sparingly */
+  /* accent (indigo) */
   --accent: #4f46e5;
   --accent-hover: #4338ca;
   --accent-weak-bg: #eef2ff;
@@ -30,25 +35,68 @@
   --danger-bg: #fef3f2;
   --danger-border: #fecdca;
 
+  /* skeleton shimmer */
+  --skeleton-base: #ececed;
+  --skeleton-shine: #f4f4f5;
+
+  /* depth — soft, no glow */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 6px 24px -8px rgba(15, 23, 42, 0.1);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* surfaces — tonal, not pure black */
+  --bg: #0d0f15;
+  --surface: #161922;
+  --surface-2: #1b1f2a;
+  --topbar-bg: rgba(13, 15, 21, 0.8);
+
+  /* text — softened, never pure white */
+  --text: #e7e9ef;
+  --text-muted: #9aa3b4;
+  --text-subtle: #6b7488;
+
+  /* lines */
+  --border: #262b38;
+  --border-strong: #333a4a;
+
+  /* accent — lighter indigo for contrast on dark */
+  --accent: #6366f1;
+  --accent-hover: #818cf8;
+  --accent-weak-bg: rgba(99, 102, 241, 0.16);
+  --accent-weak-border: rgba(129, 140, 248, 0.4);
+  --accent-text: #a5b4fc;
+
+  /* feedback */
+  --danger: #fca5a5;
+  --danger-bg: rgba(248, 113, 113, 0.12);
+  --danger-border: rgba(248, 113, 113, 0.3);
+
+  /* skeleton shimmer */
+  --skeleton-base: #1f2330;
+  --skeleton-shine: #2a2f3e;
+
+  /* depth */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 28px -10px rgba(0, 0, 0, 0.6);
+}
+
+:root {
   /* shape */
   --radius-lg: 16px;
   --radius: 12px;
   --radius-sm: 9px;
   --radius-pill: 999px;
 
-  /* depth — intentionally soft, no glow */
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-md: 0 6px 24px -8px rgba(15, 23, 42, 0.1);
-
   /* type */
   --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
 
-  color-scheme: light;
   font-family: var(--font-sans);
   font-size: 16px;
   line-height: 1.6;
-  color: var(--text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -68,17 +116,18 @@ body {
 
 body {
   background: var(--bg);
+  color: var(--text);
   min-height: 100dvh;
+  /* smooth the theme switch */
+  transition: background 200ms ease, color 200ms ease;
 }
 
-/* Accessible focus ring for every interactive element */
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
 
-/* Visually hidden but available to screen readers */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -89,4 +138,10 @@ body {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body {
+    transition: none;
+  }
 }

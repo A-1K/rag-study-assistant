@@ -8,10 +8,17 @@ CORS(app)
 
 @app.route("/ask", methods=["POST"])
 def ask_route():
-    data = request.get_json()
-    question = data["question"]
-    answer, docs = ask(question)  
-
+    data = request.get_json(silent=True) or {}
+    question = (data.get("question") or "").strip()
+    if not question:
+        return jsonify({"error": "Please provide a question."}), 400
+    
+    try:
+        answer, docs = ask(question)
+        
+    except Exception:
+        app.logger.exception("ask() failed")
+        return jsonify({"error": "The assistant is temporarily unavailable. Try again in a moment."}), 503
     sources = [
         {
             "page": d.metadata.get("page"),

@@ -1,24 +1,40 @@
 /* ============================================================
    Study Assistant — component styles
+   All colors come from CSS variables, so dark mode is automatic.
    ============================================================ */
 
-.page {
-  width: 100%;
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 48px 20px 96px;
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
 }
 
-/* ---------- Header ---------- */
+/* ---------- Top bar ---------- */
 
-.header {
-  margin-bottom: 32px;
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--topbar-bg);
+  backdrop-filter: saturate(180%) blur(10px);
+  -webkit-backdrop-filter: saturate(180%) blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar__inner {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
 }
 
 .logo {
@@ -26,17 +42,85 @@
 }
 
 .brand__name {
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 600;
   letter-spacing: -0.01em;
   color: var(--text);
 }
 
-.brand__tag {
-  margin: 10px 0 0;
+.topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* a secondary, outline-style button (used for GitHub link) */
+.ghost-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: border-color 150ms ease, background 150ms ease, transform 120ms ease;
+}
+
+.ghost-btn:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+}
+
+.ghost-btn:active {
+  transform: scale(0.97);
+}
+
+/* icon-only square button (theme toggle) */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease, color 150ms ease,
+    transform 120ms ease;
+}
+
+.icon-btn:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.icon-btn:active {
+  transform: scale(0.94);
+}
+
+/* ---------- Main ---------- */
+
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 40px 20px 64px;
+}
+
+.intro {
+  margin: 0 0 22px;
   color: var(--text-muted);
   font-size: 15px;
-  max-width: 54ch;
+  max-width: 56ch;
 }
 
 /* ---------- Composer ---------- */
@@ -152,11 +236,10 @@
   font-size: 16.5px;
   line-height: 1.7;
   color: var(--text);
-  white-space: pre-wrap; /* preserves bullet lines / formatting from the model */
+  white-space: pre-wrap;
   word-break: break-word;
 }
 
-/* inline citation chip, e.g. "Page 2, Page 3" */
 .cite {
   display: inline-block;
   margin: 0 1px;
@@ -206,7 +289,7 @@
 
 .source {
   padding: 14px 16px;
-  animation: none; /* container already animates; avoid double-animation */
+  animation: none;
 }
 
 .source__page {
@@ -265,7 +348,8 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
   cursor: pointer;
-  transition: border-color 150ms ease, background 150ms ease, transform 120ms ease;
+  transition: border-color 150ms ease, background 150ms ease, color 150ms ease,
+    transform 120ms ease;
 }
 
 .chip:hover {
@@ -295,7 +379,12 @@
 /* ---------- Skeleton ---------- */
 
 .skeleton {
-  background: linear-gradient(90deg, #ececed 25%, #f4f4f5 37%, #ececed 63%);
+  background: linear-gradient(
+    90deg,
+    var(--skeleton-base) 25%,
+    var(--skeleton-shine) 37%,
+    var(--skeleton-base) 63%
+  );
   background-size: 400% 100%;
   border-radius: 6px;
   animation: shimmer 1.3s ease-in-out infinite;
@@ -337,6 +426,34 @@
   }
 }
 
+/* ---------- Footer ---------- */
+
+.footer {
+  border-top: 1px solid var(--border);
+  padding: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-subtle);
+}
+
+.footer a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.footer a:hover {
+  color: var(--accent-text);
+  text-decoration: underline;
+}
+
+.footer__dot {
+  opacity: 0.5;
+}
+
 /* ---------- Reduced motion ---------- */
 
 @media (prefers-reduced-motion: reduce) {
@@ -344,7 +461,9 @@
   .skeleton,
   .spinner,
   .chip,
-  .composer__btn {
+  .composer__btn,
+  .ghost-btn,
+  .icon-btn {
     animation: none !important;
     transition: none !important;
   }
@@ -353,8 +472,8 @@
 /* ---------- Small screens ---------- */
 
 @media (max-width: 520px) {
-  .page {
-    padding: 28px 16px 72px;
+  .main {
+    padding: 28px 16px 56px;
   }
 
   .composer {
@@ -364,5 +483,14 @@
 
   .composer__btn {
     justify-content: center;
+  }
+
+  /* keep the GitHub icon, hide its label to save space */
+  .ghost-btn__label {
+    display: none;
+  }
+
+  .ghost-btn {
+    padding: 0 11px;
   }
 }

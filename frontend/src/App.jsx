@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
 
 // Where the Flask backend lives. CORS(app) on the server allows this cross-origin call.
 const API_URL = "http://127.0.0.1:5000/ask";
 
-// The exact string the prompt tells Gemini to return when it can't answer.
+// The exact string the prompt tells the model to return when it can't answer.
 const REFUSAL = "Not covered in the uploaded materials";
+
+const REPO_URL = "https://github.com/A-1K/rag-study-assistant";
 
 const EXAMPLES = [
   "What is the bag-of-words representation?",
@@ -19,6 +21,24 @@ export default function App() {
   const [sources, setSources] = useState([]);
   const [status, setStatus] = useState("idle"); // idle | loading | done | error
   const [errorMsg, setErrorMsg] = useState("");
+
+  // Theme starts from whatever the pre-paint script set on <html>.
+  const [theme, setTheme] = useState(
+    () => document.documentElement.getAttribute("data-theme") || "light",
+  );
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    try {
+      localStorage.setItem("theme", theme);
+    } catch (e) {
+      /* ignore storage errors (e.g. private mode) */
+    }
+  }, [theme]);
+
+  function toggleTheme() {
+    setTheme((t) => (t === "dark" ? "light" : "dark"));
+  }
 
   async function ask(q) {
     const query = q.trim();
@@ -36,7 +56,17 @@ export default function App() {
         body: JSON.stringify({ question: query }),
       });
 
-      if (!res.ok) throw new Error(`Server responded ${res.status}`);
+      // Surface the backend's own error message (e.g. the 400 / 503 JSON).
+      if (!res.ok) {
+        let msg = `Request failed (${res.status})`;
+        try {
+          const body = await res.json();
+          if (body?.error) msg = body.error;
+        } catch (e) {
+          /* response had no JSON body */
+        }
+        throw new Error(msg);
+      }
 
       const data = await res.json();
       setAnswer(data.answer);
@@ -44,7 +74,7 @@ export default function App() {
       setStatus("done");
     } catch (err) {
       setErrorMsg(
-        err.message.includes("fetch")
+        err.message === "Failed to fetch"
           ? "Couldn't reach the server. Is the Flask backend running on port 5000?"
           : err.message,
       );
@@ -75,19 +105,46 @@ export default function App() {
     status === "done" && (answer ?? "").trim().startsWith(REFUSAL);
 
   return (
-    <div className="page">
-      <header className="header">
-        <div className="brand">
-          <LogoMark />
-          <span className="brand__name">Study Assistant</span>
+    <div className="app">
+      <header className="topbar">
+        <div className="topbar__inner">
+          <div className="brand">
+            <LogoMark />
+            <span className="brand__name">Study Assistant</span>
+          </div>
+
+          <div className="topbar__actions">
+            <a
+              className="ghost-btn"
+              href={REPO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <GithubIcon />
+              <span className="ghost-btn__label">GitHub</span>
+            </a>
+
+            <button
+              type="button"
+              className="icon-btn"
+              onClick={toggleTheme}
+              aria-label={
+                theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
+              }
+              title={theme === "dark" ? "Light mode" : "Dark mode"}
+            >
+              {theme === "dark" ? <SunIcon /> : <MoonIcon />}
+            </button>
+          </div>
         </div>
-        <p className="brand__tag">
-          Ask questions about your lecture notes — answers cite the page they
-          came from.
-        </p>
       </header>
 
       <main className="main">
+        <p className="intro">
+          Ask questions about your lecture notes — answers cite the page they
+          came from.
+        </p>
+
         <form className="composer" onSubmit={onSubmit}>
           <label htmlFor="q" className="sr-only">
             Your question
@@ -113,7 +170,6 @@ export default function App() {
           </button>
         </form>
 
-        {/* Results region — aria-live announces updates to screen readers */}
         <section className="results" aria-live="polite">
           {status === "idle" && (
             <EmptyState examples={EXAMPLES} onPick={runExample} />
@@ -133,6 +189,16 @@ export default function App() {
           )}
         </section>
       </main>
+
+      <footer className="footer">
+        <span>RAG study assistant</span>
+        <span className="footer__dot">·</span>
+        <span>React · Flask · ChromaDB · Groq</span>
+        <span className="footer__dot">·</span>
+        <a href={REPO_URL} target="_blank" rel="noopener noreferrer">
+          Source
+        </a>
+      </footer>
     </div>
   );
 }
@@ -274,6 +340,45 @@ function InfoIcon() {
       <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6" />
       <path
         d="M12 11v5M12 8h.01"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function GithubIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true">
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.49 0-.24-.01-.87-.01-1.71-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.5-1.11-1.5-.91-.64.07-.62.07-.62 1 .07 1.53 1.05 1.53 1.05.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.55-1.14-4.55-5.05 0-1.12.39-2.03 1.03-2.74-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05A9.36 9.36 0 0 1 12 6.84c.85 0 1.71.12 2.51.34 1.91-1.33 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.71 1.03 1.62 1.03 2.74 0 3.92-2.34 4.78-4.57 5.04.36.32.68.94.68 1.9 0 1.37-.01 2.48-.01 2.82 0 .27.18.6.69.49A10.01 10.01 0 0 0 22 12.25C22 6.58 17.52 2 12 2Z"
+      />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+      <path
+        d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function SunIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.7" />
+      <path
+        d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
         stroke="currentColor"
         strokeWidth="1.7"
         strokeLinecap="round"
