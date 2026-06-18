@@ -9,7 +9,6 @@
 ![LangChain](https://img.shields.io/badge/%F0%9F%A6%9C%F0%9F%94%97-LangChain-1C3C3C)
 ![ChromaDB](https://img.shields.io/badge/ChromaDB-vector%20store-FF6F61)
 ![Groq](https://img.shields.io/badge/Groq-Llama%203.3%2070B-F55036?logo=groq&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-green)
 
 ![Study Assistant answering a question with page citations](docs/screenshots/answer-light.png)
 
