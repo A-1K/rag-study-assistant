@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import "./App.css";
 
 // Where the Flask backend lives. CORS(app) on the server allows this cross-origin call.
-const API_URL = "http://127.0.0.1:5000/ask";
+// Same-origin "/ask" in production (set via VITE_API_URL at build); localhost in dev.
+const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:5000/ask";
 
 // The exact string the prompt tells the model to return when it can't answer.
 const REFUSAL = "Not covered in the uploaded materials";

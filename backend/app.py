@@ -1,10 +1,23 @@
-from flask import Flask, request, jsonify
+import os
+
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 
-from retriever import ask   
+from retriever import ask
 
-app = Flask(__name__)
+# In production, Flask also serves the built React app (frontend/dist),
+# so the whole app runs from one origin inside a single container.
+DIST_DIR = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", "frontend", "dist"
+)
+
+app = Flask(__name__, static_folder=DIST_DIR, static_url_path="")
 CORS(app)
+
+
+@app.route("/")
+def index():
+    return send_from_directory(DIST_DIR, "index.html")
 
 @app.route("/ask", methods=["POST"])
 def ask_route():
