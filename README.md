@@ -1,4 +1,4 @@
-# 📚 Study Assistant
+# RAG Study Assistant
 
 > A retrieval-augmented (RAG) study assistant that answers questions about your lecture notes — and **cites the exact page** every answer came from. If something isn't in your slides, it says so instead of making it up.
 
