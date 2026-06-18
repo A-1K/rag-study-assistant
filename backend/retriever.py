@@ -51,6 +51,6 @@ def ask(question: str):
 
 
 
-result = ask("What is tf-idf score?")
-print(result[0])           # answer 
-print(result[1]) # docs
+# result = ask("What is tf-idf score?")
+# print(result[0])           # answer 
+# print(result[1]) # docs
