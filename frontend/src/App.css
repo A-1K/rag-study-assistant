@@ -1,0 +1,368 @@
+/* ============================================================
+   Study Assistant — component styles
+   ============================================================ */
+
+.page {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 48px 20px 96px;
+}
+
+/* ---------- Header ---------- */
+
+.header {
+  margin-bottom: 32px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo {
+  display: block;
+}
+
+.brand__name {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.brand__tag {
+  margin: 10px 0 0;
+  color: var(--text-muted);
+  font-size: 15px;
+  max-width: 54ch;
+}
+
+/* ---------- Composer ---------- */
+
+.composer {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.composer:focus-within {
+  border-color: var(--accent-weak-border);
+  box-shadow: 0 0 0 3px var(--accent-weak-bg);
+}
+
+.composer__input {
+  flex: 1;
+  border: 0;
+  outline: none;
+  resize: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text);
+  padding: 6px 6px 6px 8px;
+  max-height: 200px;
+}
+
+.composer__input::placeholder {
+  color: var(--text-subtle);
+}
+
+.composer__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: #fff;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 150ms ease, transform 120ms ease, opacity 150ms ease;
+  white-space: nowrap;
+}
+
+.composer__btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.composer__btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.composer__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- Results / animation ---------- */
+
+.results {
+  margin-top: 24px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  animation: rise 220ms ease-out;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------- Answer ---------- */
+
+.answer {
+  padding: 22px 24px;
+}
+
+.answer__label,
+.sources__label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+  margin-bottom: 12px;
+}
+
+.answer__body {
+  font-size: 16.5px;
+  line-height: 1.7;
+  color: var(--text);
+  white-space: pre-wrap; /* preserves bullet lines / formatting from the model */
+  word-break: break-word;
+}
+
+/* inline citation chip, e.g. "Page 2, Page 3" */
+.cite {
+  display: inline-block;
+  margin: 0 1px;
+  padding: 1px 7px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--accent-text);
+  background: var(--accent-weak-bg);
+  border: 1px solid var(--accent-weak-border);
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+
+.answer--refusal {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  color: var(--text-muted);
+}
+
+.answer--refusal p {
+  margin: 0;
+  font-size: 15.5px;
+}
+
+.answer--refusal svg {
+  flex-shrink: 0;
+  color: var(--text-subtle);
+}
+
+/* ---------- Sources ---------- */
+
+.sources {
+  margin-top: 22px;
+}
+
+.sources__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.source {
+  padding: 14px 16px;
+  animation: none; /* container already animates; avoid double-animation */
+}
+
+.source__page {
+  display: inline-block;
+  margin-bottom: 7px;
+  padding: 2px 9px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+}
+
+.source__text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+/* ---------- Empty state ---------- */
+
+.empty {
+  padding: 28px 4px;
+}
+
+.empty__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.empty__hint {
+  margin: 6px 0 16px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.empty__chips {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.chip {
+  text-align: left;
+  padding: 10px 14px;
+  font-family: inherit;
+  font-size: 14.5px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease, transform 120ms ease;
+}
+
+.chip:hover {
+  border-color: var(--accent-weak-border);
+  background: var(--accent-weak-bg);
+  color: var(--accent-text);
+}
+
+.chip:active {
+  transform: scale(0.98);
+}
+
+/* ---------- Error ---------- */
+
+.error {
+  padding: 16px 18px;
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+}
+
+.error p {
+  margin: 0;
+  color: var(--danger);
+  font-size: 14.5px;
+}
+
+/* ---------- Skeleton ---------- */
+
+.skeleton {
+  background: linear-gradient(90deg, #ececed 25%, #f4f4f5 37%, #ececed 63%);
+  background-size: 400% 100%;
+  border-radius: 6px;
+  animation: shimmer 1.3s ease-in-out infinite;
+}
+
+.skeleton--line {
+  height: 13px;
+  margin-bottom: 11px;
+}
+
+.skeleton--line.short {
+  width: 55%;
+  margin-bottom: 0;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+/* ---------- Spinner ---------- */
+
+.spinner {
+  width: 15px;
+  height: 15px;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- Reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .skeleton,
+  .spinner,
+  .chip,
+  .composer__btn {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ---------- Small screens ---------- */
+
+@media (max-width: 520px) {
+  .page {
+    padding: 28px 16px 72px;
+  }
+
+  .composer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .composer__btn {
+    justify-content: center;
+  }
+}

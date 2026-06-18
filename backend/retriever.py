@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 
 load_dotenv()  
 
@@ -19,8 +20,8 @@ vecdb = Chroma(persist_directory=CHROMA_PATH, embedding_function=embeddings)
 retriever = vecdb.as_retriever(search_kwargs={"k": 4})
 
 PROMPT_TEMPLATE = """You are a study assistant. Answer the question using only the context below.
-For every claim, cite the source as [Page X].
-If the answer is not in the context, say exactly: "Not covered in the uploaded materials."
+For every claim, cite the source as [Page X]. Respond in plain text, no markdown. Format properly.
+New line after every claim. If the answer is not in the context, say exactly: "Not covered in the uploaded materials."
 
 Context:
 {context}
@@ -31,7 +32,7 @@ Answer:"""
 
 
 
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0)
+llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0)
 
 def ask(question: str):
     docs = retriever.invoke(question)            # step 1: get top-4 chunks
