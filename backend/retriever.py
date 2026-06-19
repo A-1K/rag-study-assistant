@@ -37,9 +37,15 @@ Answer:"""
 
 llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0)
 
-def ask(question: str):
-    docs = retriever.invoke(question)            # step 1: get top-4 chunks
+max_relevant = 1.3
 
+def ask(question: str):
+    score = vecdb.similarity_search_with_score(question, k=6)
+    docs = [doc for doc, dist in score if dist <= max_relevant]            # step 1: get top-6 chunks
+
+    if not docs:
+        return "Not covered in the uploaded materials.", []
+    
     context = "\n\n".join(                        # step 2: build context string
         f"[Page {d.metadata.get('page')}] {d.page_content}"
         for d in docs
