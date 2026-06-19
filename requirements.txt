@@ -8,6 +8,7 @@ langchain-text-splitters
 chromadb
 
 PyMuPDF
+pypdf
 
 sentence-transformers
 
