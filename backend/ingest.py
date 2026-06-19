@@ -12,8 +12,7 @@ from langchain_community.embeddings import SentenceTransformerEmbeddings
 PDF_PATH = "../data/sample_slide.pdf"
 CHROMA_PATH = "chroma_db"
 EMBED_MODEL = "all-MiniLM-L6-v2" 
-if os.path.exists(CHROMA_PATH):
-    shutil.rmtree(CHROMA_PATH)  
+
 
 
 

@@ -64,6 +64,16 @@ def ask(question: str):
     return response.content, docs
 
 
+def replace_doc(chunks): #swapping pdfs in-place
+    existing_pdf = vecdb.get()
+    if existing_pdf["ids"]:
+        vecdb.delete(ids=existing_pdf["ids"])
+    
+    vecdb.add_documents(chunks)
+
+    ask.cache_clear() # remove old cache since irrelevant
+
+
 
 # result = ask("What is tf-idf score?")
 # print(result[0])           # answer 

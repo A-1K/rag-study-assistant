@@ -1,13 +1,15 @@
 import os
 import re 
+import tempfile
 
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 
-from retriever import ask
+from retriever import ask, replace_doc
+from ingest import loadandchunk
 
-# In production, Flask also serves the built React app (frontend/dist),
-# so the whole app runs from one origin inside a single container.
+
+
 DIST_DIR = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "..", "frontend", "dist"
 )
@@ -15,6 +17,31 @@ DIST_DIR = os.path.join(
 app = Flask(__name__, static_folder=DIST_DIR, static_url_path="")
 CORS(app)
 
+@app.route("/upload", methods=["POST"])
+def upload_route():
+    file = request.files.get("file")
+    if file is None:
+        return jsonify({"error": "No file uploaded."}), 400
+    if not file.filename.lower().endswith(".pdf"):
+        return jsonify({"error": "Please upload a PDF file."}), 400
+
+    path = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+    file.save(path.name)
+    path.close()
+
+    try:   
+        docs, chunks = loadandchunk(path.name)
+        if not chunks:
+            return jsonify({"error": "Couldn't extract any text from that PDF (is it scanned images?)."}), 400
+        replace_doc(chunks)
+    except Exception:
+        app.logger.exception("upload failed")
+        return jsonify({"error": "Could not process that PDF."}), 500
+    finally:
+        os.remove(path.name)   
+
+    return jsonify({"status": "indexed", "filename": file.filename,
+                    "pages": len(docs), "chunks": len(chunks)})
 
 @app.route("/")
 def index():
