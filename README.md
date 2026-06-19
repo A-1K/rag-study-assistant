@@ -10,6 +10,8 @@
 ![ChromaDB](https://img.shields.io/badge/ChromaDB-vector%20store-FF6F61)
 ![Groq](https://img.shields.io/badge/Groq-Llama%203.3%2070B-F55036?logo=groq&logoColor=white)
 
+**Live demo:** https://huggingface.co/spaces/A-1K/rag-study-assistant
+
 ![Study Assistant answering a question with page citations](docs/screenshots/answer-light.png)
 
 ---
