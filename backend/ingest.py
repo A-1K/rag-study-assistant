@@ -17,7 +17,6 @@ if os.path.exists(CHROMA_PATH):
 
 
 
-embeddings = SentenceTransformerEmbeddings(model_name=EMBED_MODEL)
 
 
 
@@ -30,20 +29,23 @@ splitter = RecursiveCharacterTextSplitter(
 
 
 
+def loadandchunk (pdf_path):
+    docs = PyPDFLoader(pdf_path).load()
+    chunks = splitter.split_documents(docs)
+    return docs, chunks
+
+
 def ingest_pdf (pdf_path, chroma_path=CHROMA_PATH):
     if os.path.exists(chroma_path):
         shutil.rmtree(chroma_path) # wipe old pdf index
 
-    # Doc Loading
-    loader = PyPDFLoader(PDF_PATH)
-    docs = loader.load()
-    chunks = splitter.split_documents(docs)
-    #print(docs[0].page_content[:500])
-
     # Embed + Store
+    docs, chunks = loadandchunk(pdf_path)
+
+    embeddings = SentenceTransformerEmbeddings(model_name=EMBED_MODEL)
+ 
     Chroma.from_documents(chunks, embeddings, persist_directory=chroma_path)
     #vecdb.persist()    manual not supported any longer
-
    # print(f"Loaded {len(docs)} pages")
     return len(docs), len(chunks)
 
