@@ -6,6 +6,9 @@ from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_groq import ChatGroq
 
+from functools import lru_cache
+
+
 load_dotenv()  
 
 
@@ -39,6 +42,7 @@ llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0)
 
 max_relevant = 1.3
 
+@lru_cache(maxsize=256)
 def ask(question: str):
     score = vecdb.similarity_search_with_score(question, k=6)
     docs = [doc for doc, dist in score if dist <= max_relevant]            # step 1: get top-6 chunks
