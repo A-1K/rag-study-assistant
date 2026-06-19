@@ -1,4 +1,5 @@
 import os
+import re 
 
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
@@ -32,18 +33,20 @@ def ask_route():
     except Exception:
         app.logger.exception("ask() failed")
         return jsonify({"error": "The assistant is temporarily unavailable. Try again in a moment."}), 503
-    sources = [
-        {
-            "page": d.metadata.get("page"),
-            "text": d.page_content[:200],   
-        }
-        for d in docs
-    ]
-
+    # Show only the sources the answer actually cited (deduped by page).
+    cited = {int(n) for n in re.findall(r"Page\s*(\d+)", answer)}
+    seen = set()
+    sources = []
+    for d in docs:
+        page = d.metadata.get("page")
+        if page in cited and page not in seen:
+            seen.add(page)
+            sources.append({"page": page, "text": d.page_content[:200]})
+            
     return jsonify({
         "answer": answer,
         "sources": sources,
-    })
+     })
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

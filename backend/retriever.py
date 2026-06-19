@@ -17,11 +17,14 @@ embeddings = SentenceTransformerEmbeddings(model_name=EMBED_MODEL)
 vecdb = Chroma(persist_directory=CHROMA_PATH, embedding_function=embeddings)
 
 
-retriever = vecdb.as_retriever(search_kwargs={"k": 4})
+retriever = vecdb.as_retriever(search_kwargs={"k": 6})
 
 PROMPT_TEMPLATE = """You are a study assistant. Answer the question using only the context below.
 For every claim, cite the source as [Page X]. Respond in plain text, no markdown. Format properly.
-New line after every claim. If the answer is not in the context, say exactly: "Not covered in the uploaded materials."
+New line after every claim.  If the context contains relevant information, answer with it - even if it only partially
+covers the question. In that case do NOT add any disclaimer.
+Only if NONE of the context is relevant should you reply with exactly:
+"Not covered in the uploaded materials."
 
 Context:
 {context}
