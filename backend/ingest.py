@@ -16,29 +16,39 @@ if os.path.exists(CHROMA_PATH):
     shutil.rmtree(CHROMA_PATH)  
 
 
-# Doc Loading
-loader = PyPDFLoader(PDF_PATH)
-docs = loader.load()
-print(docs[0].page_content[:500])
 
-print(f"Loaded {len(docs)} pages")
+embeddings = SentenceTransformerEmbeddings(model_name=EMBED_MODEL)
+
+
 
 # Chunking
 splitter = RecursiveCharacterTextSplitter(
     chunk_size = 500,
     chunk_overlap = 60,
     separators=["\n\n", "\n", ". ", " ", ""],
-   # length = len,
 ) 
 
-chunks = splitter.split_documents(docs)
 
-print(chunks[0].page_content)
-print("-" * 50)
-print(chunks[1].page_content)
 
-# Embed + Store
-embeddings = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
+def ingest_pdf (pdf_path, chroma_path=CHROMA_PATH):
+    if os.path.exists(chroma_path):
+        shutil.rmtree(chroma_path) # wipe old pdf index
 
-vecdb = Chroma.from_documents(chunks, embeddings, persist_directory=CHROMA_PATH)
-#vecdb.persist()    manual not supported any longer
+    # Doc Loading
+    loader = PyPDFLoader(PDF_PATH)
+    docs = loader.load()
+    chunks = splitter.split_documents(docs)
+    #print(docs[0].page_content[:500])
+
+    # Embed + Store
+    Chroma.from_documents(chunks, embeddings, persist_directory=chroma_path)
+    #vecdb.persist()    manual not supported any longer
+
+   # print(f"Loaded {len(docs)} pages")
+    return len(docs), len(chunks)
+
+
+
+if __name__ == "__main__":
+    pages, n_chunks = ingest_pdf(PDF_PATH)
+    print(f"Indexed {pages} pages -> {n_chunks} chunks")
