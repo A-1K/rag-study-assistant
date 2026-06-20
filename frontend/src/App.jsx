@@ -1,9 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import "./App.css";
 
-// Where the Flask backend lives. CORS(app) on the server allows this cross-origin call.
-// Same-origin "/ask" in production (set via VITE_API_URL at build); localhost in dev.
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:5000/ask";
+const UPLOAD_URL = API_URL.replace(/\/ask$/, "/upload");
 
 // The exact string the prompt tells the model to return when it can't answer.
 const REFUSAL = "Not covered in the uploaded materials";
@@ -22,6 +21,11 @@ export default function App() {
   const [sources, setSources] = useState([]);
   const [status, setStatus] = useState("idle"); // idle | loading | done | error
   const [errorMsg, setErrorMsg] = useState("");
+
+  const [uploading, setUploading] = useState(false);
+  const [activeDoc, setActiveDoc] = useState(null); // uploaded filename, or null = sample
+  const [uploadError, setUploadError] = useState("");
+  const fileInputRef = useRef(null);
 
   // Theme starts from whatever the pre-paint script set on <html>.
   const [theme, setTheme] = useState(
@@ -57,7 +61,6 @@ export default function App() {
         body: JSON.stringify({ question: query }),
       });
 
-      // Surface the backend's own error message (e.g. the 400 / 503 JSON).
       if (!res.ok) {
         let msg = `Request failed (${res.status})`;
         try {
@@ -83,13 +86,40 @@ export default function App() {
     }
   }
 
+  async function uploadPdf(file) {
+    setUploading(true);
+    setUploadError("");
+    try {
+      const form = new FormData();
+      form.append("file", file); // field name must be "file" (matches backend)
+      const res = await fetch(UPLOAD_URL, { method: "POST", body: form });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `Upload failed (${res.status})`);
+
+      setActiveDoc(data.filename);
+      // the document changed — reset the conversation
+      setAnswer(null);
+      setSources([]);
+      setStatus("idle");
+      setQuestion("");
+    } catch (err) {
+      setUploadError(
+        err.message === "Failed to fetch"
+          ? "Couldn't reach the server."
+          : err.message,
+      );
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = ""; // allow re-uploading the same file
+    }
+  }
+
   function onSubmit(e) {
     e.preventDefault();
     ask(question);
   }
 
   function onKeyDown(e) {
-    // Enter submits; Shift+Enter inserts a newline.
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       ask(question);
@@ -124,7 +154,6 @@ export default function App() {
               <GithubIcon />
               <span className="ghost-btn__label">GitHub</span>
             </a>
-
             <button
               type="button"
               className="icon-btn"
@@ -142,28 +171,54 @@ export default function App() {
 
       <main className="main">
         <p className="intro">
-          Ask questions about your lecture notes — answers cite the page they
+          Ask questions about your lecture notes — every answer cites the page it
           came from.
         </p>
 
+        {/* which document we're answering from */}
+        <div className="doc-pill" title="Current document — attach a PDF to change it">
+          <FileIcon />
+          <span className="doc-pill__name">{activeDoc || "Sample lecture"}</span>
+        </div>
+
         <form className="composer" onSubmit={onSubmit}>
+          <input
+            type="file"
+            accept="application/pdf"
+            ref={fileInputRef}
+            onChange={(e) => e.target.files[0] && uploadPdf(e.target.files[0])}
+            hidden
+          />
+          <button
+            type="button"
+            className="composer__attach"
+            onClick={() => fileInputRef.current.click()}
+            disabled={uploading}
+            aria-label="Upload a PDF"
+            title="Upload a PDF to ask about your own notes"
+          >
+            {uploading ? <Spinner /> : <PaperclipIcon />}
+          </button>
+
           <label htmlFor="q" className="sr-only">
             Your question
           </label>
           <textarea
             id="q"
             className="composer__input"
-            placeholder="Ask a question about your notes…"
+            placeholder={
+              uploading ? "Indexing your PDF…" : "Ask a question about your notes…"
+            }
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             onKeyDown={onKeyDown}
             rows={2}
-            disabled={loading}
+            disabled={loading || uploading}
           />
           <button
             type="submit"
             className="composer__btn"
-            disabled={loading || !question.trim()}
+            disabled={loading || uploading || !question.trim()}
             aria-label="Ask question"
           >
             {loading ? <Spinner /> : <SendIcon />}
@@ -171,9 +226,19 @@ export default function App() {
           </button>
         </form>
 
+        {uploadError && (
+          <p className="upload-error" role="alert">
+            {uploadError}
+          </p>
+        )}
+
         <section className="results" aria-live="polite">
           {status === "idle" && (
-            <EmptyState examples={EXAMPLES} onPick={runExample} />
+            <EmptyState
+              examples={EXAMPLES}
+              onPick={runExample}
+              activeDoc={activeDoc}
+            />
           )}
 
           {loading && <AnswerSkeleton />}
@@ -190,16 +255,6 @@ export default function App() {
           )}
         </section>
       </main>
-
-      <footer className="footer">
-        <span>RAG study assistant</span>
-        <span className="footer__dot">·</span>
-        <span>React · Flask · ChromaDB · Groq</span>
-        <span className="footer__dot">·</span>
-        <a href={REPO_URL} target="_blank" rel="noopener noreferrer">
-          Source
-        </a>
-      </footer>
     </div>
   );
 }
@@ -257,11 +312,21 @@ function Sources({ sources }) {
 
 /* ---------- States ---------- */
 
-function EmptyState({ examples, onPick }) {
+function EmptyState({ examples, onPick, activeDoc }) {
+  if (activeDoc) {
+    return (
+      <div className="empty">
+        <p className="empty__title">Ready when you are</p>
+        <p className="empty__hint">
+          Ask anything about <strong>{activeDoc}</strong>.
+        </p>
+      </div>
+    );
+  }
   return (
     <div className="empty">
       <p className="empty__title">What do you want to understand?</p>
-      <p className="empty__hint">Try one of these to start:</p>
+      <p className="empty__hint">Try one of these, or attach your own PDF:</p>
       <div className="empty__chips">
         {examples.map((q) => (
           <button
@@ -327,6 +392,39 @@ function SendIcon() {
     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true">
       <path
         d="M4 12 20 4l-4 16-4-7-8-1Z"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function PaperclipIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="19" height="19" fill="none" aria-hidden="true">
+      <path
+        d="M21 11.5 12.5 20a5 5 0 0 1-7-7l8.5-8.5a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3l7.8-7.8"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function FileIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" aria-hidden="true">
+      <path
+        d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M14 3v5h5"
         stroke="currentColor"
         strokeWidth="1.7"
         strokeLinejoin="round"

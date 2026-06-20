@@ -123,6 +123,39 @@
   max-width: 56ch;
 }
 
+/* ---------- Active document pill ---------- */
+
+.doc-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  margin: 0 0 10px;
+  padding: 4px 11px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+}
+
+.doc-pill svg {
+  flex-shrink: 0;
+  color: var(--text-subtle);
+}
+
+.doc-pill__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upload-error {
+  margin: 10px 2px 0;
+  font-size: 13.5px;
+  color: var(--danger);
+}
+
 /* ---------- Composer ---------- */
 
 .composer {
@@ -140,6 +173,43 @@
 .composer:focus-within {
   border-color: var(--accent-weak-border);
   box-shadow: 0 0 0 3px var(--accent-weak-bg);
+}
+
+/* attach-PDF button, sits inside the composer on the left */
+.composer__attach {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-end;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-subtle);
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease, transform 120ms ease;
+}
+
+.composer__attach:hover:not(:disabled) {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.composer__attach:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.composer__attach:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* the spinner is white by default (for the accent button); recolor it for the light attach button */
+.composer__attach .spinner {
+  border-color: var(--border-strong);
+  border-top-color: var(--text);
 }
 
 .composer__input {
@@ -426,34 +496,6 @@
   }
 }
 
-/* ---------- Footer ---------- */
-
-.footer {
-  border-top: 1px solid var(--border);
-  padding: 20px;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--text-subtle);
-}
-
-.footer a {
-  color: var(--text-muted);
-  text-decoration: none;
-}
-
-.footer a:hover {
-  color: var(--accent-text);
-  text-decoration: underline;
-}
-
-.footer__dot {
-  opacity: 0.5;
-}
-
 /* ---------- Reduced motion ---------- */
 
 @media (prefers-reduced-motion: reduce) {
@@ -462,6 +504,7 @@
   .spinner,
   .chip,
   .composer__btn,
+  .composer__attach,
   .ghost-btn,
   .icon-btn {
     animation: none !important;
@@ -474,15 +517,6 @@
 @media (max-width: 520px) {
   .main {
     padding: 28px 16px 56px;
-  }
-
-  .composer {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .composer__btn {
-    justify-content: center;
   }
 
   /* keep the GitHub icon, hide its label to save space */
