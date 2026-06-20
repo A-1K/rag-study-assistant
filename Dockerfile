@@ -1,9 +1,5 @@
-# ============================================================
-# Multi-stage build for Hugging Face Spaces (Docker SDK).
-# Stage 1 builds the React frontend; stage 2 runs Flask + serves it.
-# ============================================================
 
-# ---------- Stage 1: build the React frontend ----------
+#  build the React frontend
 FROM node:20-slim AS frontend
 
 WORKDIR /app/frontend
@@ -11,21 +7,17 @@ COPY frontend/package*.json ./
 RUN npm install
 
 COPY frontend/ ./
-# In production the API is same-origin, so the app calls /ask directly.
 ENV VITE_API_URL=/ask
 RUN npm run build
 
 
-# ---------- Stage 2: Python backend + server ----------
+# Python backend + serve
 FROM python:3.11-slim
 
-# build-essential is needed to compile a few deps (e.g. ChromaDB's hnswlib).
 RUN apt-get update \
     && apt-get install -y --no-install-recommends build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Hugging Face Spaces run the container as uid 1000 — set that up so the
-# model cache and vector store are owned by the runtime user.
 RUN useradd -m -u 1000 user
 USER user
 ENV HOME=/home/user \
@@ -35,6 +27,9 @@ ENV HOME=/home/user \
 WORKDIR /home/user/app
 
 COPY --chown=user requirements.txt ./
+# Install the CPU-only build of torch FIRST, so sentence-transformers doesn't pull
+# the ~2.5GB CUDA/GPU build (useless on a CPU Space, and the image bloat breaks startup).
+RUN pip install --no-cache-dir --user torch --index-url https://download.pytorch.org/whl/cpu
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 COPY --chown=user backend/ ./backend/
