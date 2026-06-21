@@ -20,7 +20,7 @@
 
 I kept re-reading the same lecture slides looking for one definition. So I built a tool I can just *ask*.
 
-You point it at a PDF of your notes once. After that, you ask questions in plain English and it pulls the few most relevant chunks out of your slides, hands them to an LLM, and writes a short answer with `[Page X]` citations so you can jump back to the source. The model only ever sees the retrieved chunks, never the whole PDF, so it can't wander off into things you never uploaded.
+Upload a PDF of your notes from the browser, then ask questions in plain English — it pulls the few most relevant chunks out of your slides, hands them to an LLM, and writes a short answer with `[Page X]` citations so you can jump back to the source. The model only ever sees the retrieved chunks, never the whole PDF, so it can't wander off into things you never uploaded.
 
 The interesting part isn't the chatbot. It's that the answers are **grounded** and **checkable**, and that I measured how good the retrieval actually is instead of just trusting that it "felt right."
 
@@ -36,10 +36,11 @@ The landing page before you ask anything:
 
 ## Features
 
-- **Cited answers** — every claim is tagged with the page it came from, rendered as little chips in the UI.
-- **Honest refusals** — ask it something outside your notes and it replies *"Not covered in the uploaded materials"* instead of hallucinating.
+- **Upload your own PDF** — drop any lecture PDF in from the UI and ask about it instantly; no redeploy, no config.
+- **Cited answers** — every claim is tagged with the page it came from (rendered as chips), and the Sources panel shows *only* the pages the answer actually used.
+- **Honest refusals** — a relevance threshold rejects off-topic questions *before* the LLM is even called, and the prompt refuses anything the retrieved text doesn't cover — so it says *"Not covered in the uploaded materials"* instead of making things up.
 - **Local, free embeddings** — documents are embedded on your own machine with `sentence-transformers`, so indexing costs nothing and needs no API.
-- **Fast generation** — answers come from Llama 3.3 70B on Groq.
+- **Fast generation + caching** — answers come from Llama 3.3 70B on Groq, and repeated questions return instantly from an in-memory cache.
 - **A real evaluation** — a retrieval eval script reports hit-rate so improvements are measurable, not vibes.
 - **Clean React UI** — light/dark mode, loading skeletons, graceful error states, keyboard-to-send.
 
@@ -47,33 +48,35 @@ The landing page before you ask anything:
 
 RAG is really two separate pipelines.
 
-**1. Ingestion** — runs once, when you add notes. Turns a PDF into searchable vectors.
+**1. Ingestion** — runs whenever you add notes (the bundled sample at build time, or any PDF you upload at runtime). Turns a PDF into searchable vectors.
 
 ```
-PDF --> PyMuPDF loader --> split into ~500-char chunks --> embed locally (MiniLM) --> ChromaDB
+PDF --> PyPDF loader --> split into ~500-char chunks --> embed locally (MiniLM) --> ChromaDB
 ```
 
 **2. Query** — runs on every question. Finds the relevant chunks and asks the LLM to answer *using only those*.
 
 ```
-question --> embed (same MiniLM) --> top-4 nearest chunks (ChromaDB)
+question --> embed (same MiniLM) --> top-k nearest chunks (ChromaDB)
+         --> keep only chunks above a relevance threshold (refuse outright if none qualify)
          --> prompt = chunks + question --> Llama 3.3 70B (Groq) --> cited answer
 ```
 
-The key idea: the LLM never reads your PDF. It only ever sees the 3-5 closest chunks at query time. Retrieval finds the nearest candidates; the prompt makes the model answer from them and refuse if they don't contain the answer.
+The key idea: the LLM never reads your PDF. It only ever sees the few closest chunks at query time. A relevance threshold drops chunks that aren't close enough (and refuses before spending an LLM call if nothing is), and the prompt makes the model answer only from what's left — and refuse if it doesn't contain the answer.
 
 ## Tech stack
 
 | Layer | Choice | Why |
 |---|---|---|
-| PDF parsing | PyMuPDF | Handles slide layouts well |
+| PDF parsing | pypdf (LangChain `PyPDFLoader`) | Pulls text + page numbers from each slide |
 | Chunking | LangChain `RecursiveCharacterTextSplitter` | Splits on paragraph/sentence boundaries |
 | Embeddings | `all-MiniLM-L6-v2` (local) | Free, no API, runs offline |
 | Vector store | ChromaDB | Simple local persistence |
 | LLM | Llama 3.3 70B via Groq | Fast and free-tier friendly |
 | Orchestration | LangChain | Glues retrieval + LLM together |
-| Backend | Flask + flask-cors | Tiny JSON API (`/ask`) |
+| Backend | Flask + flask-cors | JSON API (`/ask`, `/upload`) that also serves the built UI |
 | Frontend | React 19 + Vite | Single-page UI |
+| Deployment | Docker on Hugging Face Spaces | One container builds the frontend, bakes the vector store, and serves everything |
 
 > **Running cost: ~$0.** Embeddings run locally, and Groq's free tier comfortably covers generation for studying.
 
@@ -145,7 +148,7 @@ npm install
 npm run dev            # http://localhost:5173
 ```
 
-Open **http://localhost:5173** and ask away.
+Open **http://localhost:5173** and ask away. Once it's running, use the **paperclip in the composer to upload your own PDF** — no need to touch `ingest.py`.
 
 ## Project structure
 
@@ -154,7 +157,7 @@ rag-study-assistant/
 ├── backend/
 │   ├── ingest.py        # ingestion pipeline: PDF -> chunks -> embeddings -> ChromaDB
 │   ├── retriever.py     # query pipeline: question -> chunks -> Groq -> cited answer
-│   ├── app.py           # Flask API (POST /ask)
+│   ├── app.py           # Flask API (/ask, /upload) + serves the built UI
 │   └── eval.py          # retrieval evaluation (hit@1 / hit@4)
 ├── frontend/            # React + Vite single-page app
 │   └── src/
@@ -167,9 +170,10 @@ rag-study-assistant/
 
 ## Notes & limitations
 
-- Single-PDF demo by default; multi-document collections would need metadata and a collection picker.
+- **One active document at a time** — uploading a PDF replaces the current index (simple by design); per-session isolation for concurrent users is a planned next step.
+- On the hosted demo, uploaded PDFs live in the Space's temporary storage and reset when it restarts — just re-upload.
 - Each question is independent — no conversation memory yet (no "explain that again" follow-ups).
-- The vector store (`chroma_db/`) is a build artifact and is gitignored — run `ingest.py` to regenerate it.
+- The vector store (`chroma_db/`) is a build artifact and is gitignored — run `ingest.py` (or upload a PDF) to regenerate it.
 
 ## Acknowledgements
 
